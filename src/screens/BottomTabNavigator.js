@@ -7,25 +7,41 @@ import UserProfileScreen from './UserProfileScreen';
 import HomeDashboardScreen from './HomeDashboardScreen';
 import TrainerProfileScreen from './TrainerProfileScreen';
 import UserListScreen from './UserListScreen'; 
-import GradientHeader from './GradientHeader'; // Import the updated GradientHeader
-import {CustomHeader2} from './CustomHeader';
+import {GradientHeader, GradientHeader2, GradientHeader3} from './GradientHeader'; 
+import {CustomHeader2, CustomHeader} from './CustomHeader';
 import ClientListScreen from './ClientListScreen';
 import ClientProfileScreen from './ClientProfileScreen';
+import EditProfileScreen from './EditProfileScreen';
+import NotificationsScreen from './NotificationsScreen';
+import QuestionnaireScreen2 from './QuestionnaireScreen2';
 
+// Create Stack Navigators for each entity
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+// Home Stack
 const HomeStack = () => (
   <Stack.Navigator>
     <Stack.Screen 
       name="HomeDashboard" 
       component={HomeDashboardScreen} 
-      options={{ headerShown: false }} 
+      options={{
+        header: () => <GradientHeader2 title="Home" />,
+      }}  
     />
     <Stack.Screen 
       name="UserList" 
       component={UserListScreen} 
-      options={{ headerShown: true, title: 'Trainer List' }} 
+      options={{
+        header: () => <GradientHeader title="Users List" />,
+      }} 
+    />
+    <Stack.Screen 
+      name="ClientList" 
+      component={ClientListScreen} 
+      options={{
+        header: () => <GradientHeader title="Client List" />,
+      }}  
     />
     <Stack.Screen 
       name="TrainerProfile" 
@@ -35,20 +51,68 @@ const HomeStack = () => (
       }} 
     />
     <Stack.Screen 
-      name="ClientList" 
-      component={ClientListScreen} 
-      options={{ headerShown: true, title: 'Client List' }} 
-    />
-    <Stack.Screen 
       name="ClientProfile" 
       component={ClientProfileScreen} 
       options={{
         header: () => <GradientHeader title="Client Profile" />,
       }} 
     />
+    <Stack.Screen
+      name="Notifications"
+      component={NotificationsScreen}
+      options={{
+        header: ({ navigation }) => <GradientHeader3 navigation={navigation} title="Notifications" />,
+      }}
+    />
   </Stack.Navigator>
 );
 
+// Profile Stack
+const ProfileStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen 
+      name="UserProfileScreen" 
+      component={UserProfileScreen} 
+      options={{
+        header: () => <GradientHeader2 title="Profile" />,
+      }}  
+    />
+    <Stack.Screen 
+      name="EditProfileScreen" 
+      component={EditProfileScreen} 
+      options={{
+        header: () => <GradientHeader title="Settings" />,
+      }}   
+    />
+    <Stack.Screen
+      name="Notifications"
+      component={NotificationsScreen}
+      options={{
+        header: ({ navigation }) => <GradientHeader3 navigation={navigation} title="Notifications" />,
+      }}
+    />
+  </Stack.Navigator>
+);
+
+// Chats Stack
+const ChatsStack = () => (
+  <Stack.Navigator>
+    <Stack.Screen 
+      name="Questionnaire" 
+      component={QuestionnaireScreen2} 
+      options={{ headerShown: false }} 
+    />
+    <Stack.Screen
+      name="Notifications"
+      component={NotificationsScreen}
+      options={{
+        header: ({ navigation }) => <GradientHeader3 navigation={navigation} title="Notifications" />,
+      }}
+    />
+  </Stack.Navigator>
+);
+
+// BottomTabNavigator with Home, Profile, and Chats as separate entities
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
@@ -80,9 +144,36 @@ const BottomTabNavigator = () => {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeStack} options={{ tabBarLabel: 'Dashboard', header: () => <CustomHeader2 title="Home" /> }} />
-      <Tab.Screen name="UserProfile" component={UserProfileScreen} options={{ tabBarLabel: 'Profile', header: () => <CustomHeader2 title="Profile" /> }} />
-      <Tab.Screen name="Chats" component={HomeDashboardScreen} options={{ tabBarLabel: 'Chats' }} />
+      {/* Home Stack */}
+      <Tab.Screen 
+        name="Home" 
+        component={HomeStack} 
+        options={({ navigation }) => ({ 
+          header: () => <CustomHeader2 title="Home" navigation={navigation} />, 
+          tabBarLabel: "Home" , headerShown: false
+        })} 
+      />
+      
+      {/* Profile Stack */}
+      <Tab.Screen 
+        name="UserProfile" 
+        component={ProfileStack} 
+        options={({ navigation }) => ({ 
+          header: () => <CustomHeader title="" navigation={navigation} />, 
+          tabBarLabel: "Profile", 
+          headerShown: false 
+        })} 
+      />
+      
+      {/* Chats Stack */}
+      <Tab.Screen 
+        name="Chats" 
+        component={ChatsStack} 
+        options={{ 
+          tabBarLabel: 'Chats', 
+          headerShown: false 
+        }} 
+      />
     </Tab.Navigator>
   );
 };

@@ -1,4 +1,4 @@
-export const Questions = [
+export const ClientQuestions = [
   // Common Questions (For All Users)
   {
     id: 1,

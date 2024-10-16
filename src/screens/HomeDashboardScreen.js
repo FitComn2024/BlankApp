@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { HomeDashboardScreenStyles as styles } from '../styles/HomeDashboardScreenStyles';
 import { GlobalStyles } from '../styles/GlobalStyles';
 import { SampleUsersTrainers as sampleTrainers } from '../data/SampleUsersTrainers';
 import { SampleUsersClients as sampleClients } from '../data/SampleUsersClients';
+import * as SecureStore from 'expo-secure-store';
 
 const HomeDashboardScreen = ({ navigation }) => {
-  const [userType, setUserType] = useState('Trainer'); // State to toggle between Client and Trainer
-  const userName = "John Doe"; // Replace with dynamic user name as needed
+  const [userName, setUserName] = useState(''); // Replace with dynamic user name as needed
+  const [userType, setUserType] = useState('client');
+
+  useEffect(() => {
+    const fetchUserType = async () => {
+      const typeOfUser = await SecureStore.getItemAsync('userType');
+      const nameOfUser = await SecureStore.getItemAsync('userName');
+      setUserType(typeOfUser ? typeOfUser.toLowerCase() : 'client'); // Ensure lowercasing
+      setUserName(nameOfUser || 'User'); // Fallback to 'User' if name is not available
+    };
+
+    fetchUserType();
+  }, []);
 
   const handleSeeAll = (title, filterFn) => {
-    const filteredUsers = userType === 'Client' 
+    const filteredUsers = userType === 'client' 
       ? sampleTrainers.filter(filterFn) 
       : sampleClients.filter(filterFn);
-  
-    if (userType === 'Client') {
+
+    if (userType === 'client') {
       navigation.navigate('UserList', { title, users: filteredUsers.length ? filteredUsers : [] });
     } else {
       navigation.navigate('ClientList', { title, clients: filteredUsers.length ? filteredUsers : [] });
@@ -23,19 +35,22 @@ const HomeDashboardScreen = ({ navigation }) => {
   };
 
   const handleCardPress = (user) => {
-    if (userType === 'Client') {
+    console.log('Passing data:', user);
+
+    if (userType === 'client') {
+      // Navigate to TrainerProfile screen for a client viewing a trainer's profile
       navigation.navigate('TrainerProfile', { user });
     } else {
-      var client = user
-      navigation.navigate('ClientProfile', { client });
+      // Navigate to ClientProfile screen for a trainer viewing a client's profile
+      navigation.navigate('ClientProfile', { client: user });
     }
   };
 
-  const filters = userType === 'Client' 
+  const filters = userType === 'client' 
     ? ['Highest rated Trainers', 'Trainers near me', 'Certified Trainers', 'Nutritionists']
-    : ['Clients near me', 'Weight loss clients', 'weight gain clients', 'Gym Goers', 'Non Gym Goers'];
+    : ['Clients near me', 'Weight loss clients', 'Weight gain clients', 'Gym Goers', 'Non-Gym Goers'];
 
-  const sampleUsers = userType === 'Client' ? sampleTrainers : sampleClients;
+  const sampleUsers = userType === 'client' ? sampleTrainers : sampleClients;
 
   return (
     <ScrollView style={GlobalStyles.container} contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
@@ -56,22 +71,6 @@ const HomeDashboardScreen = ({ navigation }) => {
 
       <Text style={GlobalStyles.heading1}>Welcome back, {userName}!</Text>
 
-      {/* Toggle between Client and Trainer */}
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity 
-          onPress={() => setUserType('Client')} 
-          style={[styles.toggleButton, userType === 'Client' && styles.activeToggle]}
-        >
-          <Text style={styles.toggleButtonText}>Client</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          onPress={() => setUserType('Trainer')} 
-          style={[styles.toggleButton, userType === 'Trainer' && styles.activeToggle]}
-        >
-          <Text style={styles.toggleButtonText}>Trainer</Text>
-        </TouchableOpacity>
-      </View>
-
       {/* User Profile Sections */}
       {filters.map((filterTitle, index) => (
         <View style={styles.section} key={index}>
@@ -88,7 +87,7 @@ const HomeDashboardScreen = ({ navigation }) => {
                   <Image source={{ uri: user.dp }} style={styles.profileImage} />
                   <Text style={GlobalStyles.text}>{user.name}</Text>
                   <Text style={GlobalStyles.text}>Location: {user.location}</Text>
-                  {userType === 'Client' ? (
+                  {userType === 'client' ? (
                     <>
                       <Text style={GlobalStyles.text}>Rating: {user.rating}</Text>
                       <Text style={GlobalStyles.text}>Type: {user.type}</Text>

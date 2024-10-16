@@ -9,7 +9,7 @@ import * as Location from 'expo-location';
 import * as SecureStore from 'expo-secure-store';
 import { QuestionnaireScreenStyles as styles } from '../styles/QuestionnaireScreenStyles';
 
-const QuestionnaireScreen = ({ navigation }) => {
+const QuestionnaireScreen2 = ({ navigation }) => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isSecondSet, setIsSecondSet] = useState(false);
     const [userType, setUserType] = useState('trainer'); // Assume 'trainer' or 'client'
@@ -496,7 +496,7 @@ const QuestionnaireScreen = ({ navigation }) => {
         console.log('Collected Answers:', collectedAnswers);
         
         // Navigate to the profile page (Replace 'UserProfileScreen' with the correct profile screen name in your app)
-        navigation.navigate('MainTabs');
+        navigation.navigate('UserProfile');
     };
 
     // Calculate progress bar width
@@ -560,4 +560,4 @@ const QuestionnaireScreen = ({ navigation }) => {
     );
 };
 
-export default QuestionnaireScreen;
+export default QuestionnaireScreen2;

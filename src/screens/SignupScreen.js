@@ -4,15 +4,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlobalStyles as styles, colors } from '../styles/GlobalStyles'; // Import global styles and colors
 import { SignupScreenStyles as localStyles } from '../styles/SignupScreenStyles';
+import { getUserPoolData } from '../data/Config';
 import {
   CognitoUserPool,
   CognitoUserAttribute,
   CognitoUser,
 } from 'amazon-cognito-identity-js';
 
-// Separate pool data for clients and trainers
-import clientPoolData from './ClientAmplifyConfig';
-import trainerPoolData from './TrainerAmplifyConfig';
 
 const SignupScreen = ({ navigation }) => {
   const [fullName, setFullName] = useState('');
@@ -57,8 +55,8 @@ const SignupScreen = ({ navigation }) => {
   };
 
   const signUp = async (email, password) => {
-    const userPoolData = userType === 'client' ? clientPoolData : trainerPoolData;
-    const userPool = new CognitoUserPool(userPoolData);
+    const poolData = await getUserPoolData();
+    const userPool = new CognitoUserPool(poolData);
 
     const attributeList = [];
 
@@ -111,8 +109,9 @@ const SignupScreen = ({ navigation }) => {
   };
 
   const confirmSignUp = async (email, code) => {
-    const userPoolData = userType === 'client' ? clientPoolData : trainerPoolData;
-    const userPool = new CognitoUserPool(userPoolData);
+    const poolData = await getUserPoolData();
+    const userPool = new CognitoUserPool(poolData);
+   
 
     const userData = {
       Username: email,

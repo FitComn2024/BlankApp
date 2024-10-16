@@ -1,183 +1,122 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import { GlobalStyles, colors } from '../styles/GlobalStyles'; // Import global styles and colors
+
+const screenWidth = Dimensions.get('window').width;
 
 export const UserProfileScreenStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
   },
-  scrollContainer: {
+  headerContainer: {
     padding: 20,
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    backgroundColor: colors.gradientStart,
   },
-  header: {
+  headerContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
   },
-  profilePicture: {
+  profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginRight: 20,
-    backgroundColor: '#e0e0e0', // Ensure visibility if image fails to load
+    borderColor: '#fff',
+    borderWidth: 3,
   },
-  nameContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flex: 1,
+  headerText: {
+    marginLeft: 20,
   },
-  profileName: {
-    flex: 1,
-    color: colors.text,
-    fontFamily: 'System',
-    fontSize: 18,
+  userName: {
+    fontSize: 24,
+    color: '#fff',
     fontWeight: 'bold',
   },
-  settingsIcon: {
-    width: 25,
-    height: 25,
-    tintColor: colors.text, // Ensure the icon matches the theme
-  },
-  statistics: {
-    marginBottom: 20,
-    marginLeft:0,
-    marginRight: 'auto'
-  },
-  statLabel: {
-    fontFamily: 'System',
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 5,
-  },
-  statValue: {
-    fontFamily: 'System',
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 10,
-  },
-  caloriesContainer:{
-    width: '100%'
-  },
-  progressBarContainer: {
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  progressBarBackground: {
-    flexDirection: 'row',
-    height: 20,
-    backgroundColor: '#ddd',
-    borderRadius: 10,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  progressBar: {
-    position: 'absolute',
-    height: '100%',
-  },
-  consumedBar: {
-    backgroundColor: colors.primary,
-  },
-  burnedBar: {
-    backgroundColor: colors.error,
-  },
-  caloriesText: {
-    fontFamily: 'System',
-    fontSize: 14,
-    color: colors.text,
-    marginTop: 5,
-  },
-  graphContainer: {
-    marginBottom: 20,
-    height: 200,
-    backgroundColor: colors.background,
-    borderRadius: 10,
-    
-  },
-  graphTitle: {
-    fontFamily: 'System',
+  userDetails: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: colors.primary,
-    marginBottom: 10,
-  },
-  activitiesContainer: {
-    marginBottom: 20,
-    width: '100%',
+    color: '#fff',
+    marginTop: 4,
   },
   sectionTitle: {
-    fontFamily: 'System',
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: 'bold',
+    marginVertical: 15,
+    paddingHorizontal: 20,
     color: colors.primary,
-    marginBottom: 10,
   },
-  activityItem: {
+  galleryContainer: {
+    paddingHorizontal: 20,
+  },
+  galleryImage: {
+    width: screenWidth - 60,
+    height: 200,
+    marginRight: 15,
+    borderRadius: 12,
+    backgroundColor: '#e0e0e0', // Placeholder color
+  },
+  collapsibleHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: colors.background,
-   
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#f0f0f0',
     borderRadius: 10,
-    marginBottom: 10,
   },
-  activityName: {
-    fontFamily: 'System',
-    fontSize: 14,
-    color: colors.text,
-  },
-  activityButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 5,
-    paddingVertical: 5,
-    
-    alignItems: 'center',
-  },
-  activityButtonCompleted: {
-    backgroundColor: '#aaa', // Grey out completed activities
-  },
-  buttonText: {
-    fontFamily: 'System',
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.buttonText,
-  },
-  trainerSection: {
-    marginBottom: 20,
-  },
-  clientsContainer: {
-    marginBottom: 20,
-  },
-  clientItem: {
-    backgroundColor: colors.background,
-   
+  collapsibleContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+    backgroundColor: '#fafafa',
     borderRadius: 10,
-    marginBottom: 10,
   },
-  clientName: {
-    fontFamily: 'System',
-    fontSize: 14,
-    color: colors.text,
-    marginBottom: 5,
+  sectionText: {
+    fontSize: 16,
+    marginVertical: 5,
+    color: '#555',
   },
-  assignButton: {
-    backgroundColor: colors.primary,
-    borderRadius: 5,
-    paddingVertical: 5,
-   
+  separator: {
+    height: 1,
+    backgroundColor: '#ccc',
+    marginVertical: 10,
+    marginHorizontal: 20,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 5,
   },
-  clientProgress: {
-    fontFamily: 'System',
-    fontSize: 14,
-    color: colors.text,
+  modalImage: {
+    width: screenWidth * 0.8,
+    height: screenWidth * 0.8,
+    resizeMode: 'contain',
+    borderRadius: 15,
   },
-  statLabelContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 5,
+  arrowButtonLeft: {
+    position: 'absolute',
+    left: 20,
+    top: '50%',
+    transform: [{ translateY: -20 }],
+    zIndex: 1,
+  },
+  arrowButtonRight: {
+    position: 'absolute',
+    right: 20,
+    top: '50%',
+    transform: [{ translateY: -20 }],
+    zIndex: 1,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 1,
+  },
+  settingsButton: {
+    position: 'absolute',
+    top: 40,
+    right: 20,
+    zIndex: 1,
   },
 });

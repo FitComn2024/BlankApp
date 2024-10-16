@@ -6,18 +6,21 @@ import * as SecureStore from 'expo-secure-store';
 import { GlobalStyles as styles, colors } from '../styles/GlobalStyles'; // Import global styles and colors
 import { LoginScreenStyles as localStyles } from '../styles/LoginScreenStyles';
 import { CognitoUser, AuthenticationDetails, CognitoUserPool } from 'amazon-cognito-identity-js';
-import poolData from './ClientAmplifyConfig';
+import { getUserPoolData } from '../data/Config';
+import {jwtDecode} from 'jwt-decode';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmationCode, setConfirmationCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [userType, setUserType] = useState('client'); // Default to 'client'
   const [forgotPasswordStep, setForgotPasswordStep] = useState(1); // 1: Enter Email, 2: Reset Password
 
   const validate = () => {
@@ -46,49 +49,73 @@ const LoginScreen = ({ navigation }) => {
     return valid;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    if (isLoggingIn) return;
+  
+    // Pass the selected userType to dynamically get the right pool data
+    const poolData = await getUserPoolData(userType);
+    console.log("pooldata", poolData);
+  
     if (validate()) {
+      setIsLoggingIn(true); // Prevent multiple presses
       const userPool = new CognitoUserPool(poolData);
       const user = new CognitoUser({
         Username: email,
         Pool: userPool,
       });
-
+  
       const authDetails = new AuthenticationDetails({
         Username: email,
         Password: password,
       });
-
+  
       user.authenticateUser(authDetails, {
         onSuccess: async (data) => {
-          console.log("Success: ", JSON.stringify(data));
-
-          // Store tokens in SecureStore
-          await SecureStore.setItemAsync('accessToken', data.getAccessToken().getJwtToken());
-          await SecureStore.setItemAsync('idToken', data.getIdToken().getJwtToken());
-          await SecureStore.setItemAsync('refreshToken', data.getRefreshToken().getToken());
-
-          // Navigate to the main app screen
-          navigation.navigate('MainTabs');
+            try {
+                console.log("Success: ", JSON.stringify(data));
+    
+                // Decode the JWT token to get user_id
+                const idToken = data.getIdToken().getJwtToken();
+                const decodedToken = jwtDecode(idToken);
+                const userId = decodedToken['sub']; // 'sub' usually represents the user_id in the token
+    
+                // Store tokens, user_id, and userType in SecureStore
+                await SecureStore.setItemAsync('accessToken', data.getAccessToken().getJwtToken());
+                await SecureStore.setItemAsync('idToken', idToken);
+                await SecureStore.setItemAsync('refreshToken', data.getRefreshToken().getToken());
+                await SecureStore.setItemAsync('userName', email);
+                await SecureStore.setItemAsync('userId', userId); // Store the user_id
+                await SecureStore.setItemAsync('userType', userType); // Store the selected userType
+    
+                // Navigate to the main app screen
+                navigation.navigate('QuestionnaireScreen');
+            } catch (err) {
+                console.error("Error storing tokens or navigating: ", err);
+                setErrors({ general: 'Error occurred while logging in. Please try again.' });
+                setIsLoggingIn(false); // Enable the button again
+            }
         },
         onFailure: (err) => {
-          console.log("Failure: ", JSON.stringify(err));
-          setErrors({ general: 'Invalid email or password. Please try again.' });
+            console.error("Authentication failed: ", JSON.stringify(err));
+            setErrors({ general: 'Invalid email or password. Please try again.' });
+            setIsLoggingIn(false); // Enable the button again
         },
         newPasswordRequired: (data) => {
-          console.log("New password required: ", JSON.stringify(data));
-          // Handle new password scenario if needed
+            console.log("New password required: ", JSON.stringify(data));
+            setIsLoggingIn(false); // Enable the button again
+            // Handle new password scenario if needed
         },
-      });
+    });
     }
   };
+  
 
-  const handleForgotPassword = () => {
+  const handleForgotPassword = async () => {
     if (email.length === 0) {
       setErrors({ email: 'Email is required' });
       return;
     }
-
+    const poolData = await getUserPoolData(userType);
     const userPool = new CognitoUserPool(poolData);
     const user = new CognitoUser({
       Username: email,
@@ -113,8 +140,9 @@ const LoginScreen = ({ navigation }) => {
     });
   };
 
-  const handleResetPassword = () => {
+  const handleResetPassword = async () => {
     if (validate()) {
+      const poolData = await getUserPoolData(userType);
       const userPool = new CognitoUserPool(poolData);
       const user = new CognitoUser({
         Username: email,
@@ -150,6 +178,33 @@ const LoginScreen = ({ navigation }) => {
     if (forgotPasswordStep === 1) {
       return (
         <>
+        <View style={localStyles.inputContainer}>
+                <Text style={localStyles.label}>Are you a </Text>
+                <View style={localStyles.radioGroupRow}>
+                  <TouchableOpacity
+                    style={localStyles.radioButton}
+                    onPress={() => setUserType('client')}
+                  >
+                    <Ionicons
+                      name={userType === 'client' ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={colors.primary}
+                    />
+                    <Text style={localStyles.radioText}>Client</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={localStyles.radioButton}
+                    onPress={() => setUserType('trainer')}
+                  >
+                    <Ionicons
+                      name={userType === 'trainer' ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={colors.primary}
+                    />
+                    <Text style={localStyles.radioText}>Trainer</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
           <View style={localStyles.inputContainer}>
             <Text style={localStyles.label}>Email</Text>
             <View style={localStyles.inputWrapper}>
@@ -267,8 +322,34 @@ const LoginScreen = ({ navigation }) => {
           {!isForgotPassword ? (
             <>
               {errors.general && <Text style={localStyles.errorText}>{errors.general}</Text>}
-
               <View style={localStyles.inputContainer}>
+                <Text style={localStyles.label}>I am a</Text>
+                <View style={localStyles.radioGroupRow}>
+                  <TouchableOpacity
+                    style={localStyles.radioButton}
+                    onPress={() => setUserType('client')}
+                  >
+                    <Ionicons
+                      name={userType === 'client' ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={colors.primary}
+                    />
+                    <Text style={localStyles.radioText}>Client</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={localStyles.radioButton}
+                    onPress={() => setUserType('trainer')}
+                  >
+                    <Ionicons
+                      name={userType === 'trainer' ? 'radio-button-on' : 'radio-button-off'}
+                      size={20}
+                      color={colors.primary}
+                    />
+                    <Text style={localStyles.radioText}>Trainer</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+                <View style={localStyles.inputContainer}>
                 <Text style={localStyles.label}>Email</Text>
                 <View style={localStyles.inputWrapper}>
                   <TextInput
@@ -310,7 +391,7 @@ const LoginScreen = ({ navigation }) => {
                 <Text style={localStyles.forgotPasswordText} onPress={() => setIsForgotPassword(true)}>Forgot password?</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={localStyles.signInButton} onPress={handleLogin}>
+              <TouchableOpacity style={localStyles.signInButton} disabled={isLoggingIn} onPress={handleLogin}>
                 <LinearGradient
                   colors={[colors.gradientStart, colors.gradientEnd]}
                   style={localStyles.signInButtonGradient}

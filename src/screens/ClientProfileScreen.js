@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -6,8 +6,10 @@ import { ClientProfileScreenStyles as styles } from '../styles/ClientProfileScre
 import { GlobalStyles, colors } from '../styles/GlobalStyles';
 
 const ClientProfileScreen = ({ route, navigation }) => {
-  const { client } = route.params;
-
+  const { client={} } = route.params || {};
+  useEffect(() => {
+    console.log('received data', client);
+  }, [client]);
   const [personalInfoExpanded, setPersonalInfoExpanded] = useState(false);
   const [gymRoutineExpanded, setGymRoutineExpanded] = useState(false);
   const [nonGymRoutineExpanded, setNonGymRoutineExpanded] = useState(false);

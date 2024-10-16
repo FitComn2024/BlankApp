@@ -1,10 +1,11 @@
 import React, { createContext } from "react";
 import { CognitoUser, AuthenticationDetails } from 'amazon-cognito-identity-js';
-import poolData from './ClientAmplifyConfig';
+import { getUserPoolData } from "../data/Config";
 
 const AccountContext = createContext();
 const Account = (props) => {
     const authenticate = async (Username, Password) =>{
+      const poolData = await getUserPoolData();
         return await new Promise((resolve, reject)=>{
             var Pool = new CognitoUserPool(poolData);
         const user = new CognitoUser({Username, Pool })

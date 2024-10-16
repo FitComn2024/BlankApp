@@ -116,4 +116,20 @@ export const LoginScreenStyles = StyleSheet.create({
     color: colors.primary,
     fontWeight: typography.bold,
   },
+  radioGroupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'left', // Adjust space between buttons as needed
+    marginBottom: 5, // Adjust margin as needed
+  },
+  radioButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15, // Adjust space between radio buttons as needed
+  },
+  radioText: {
+    marginLeft: 5,
+    fontSize: 16,
+    color: colors.text, // Assuming you have a text color in your colors file
+  },
 });

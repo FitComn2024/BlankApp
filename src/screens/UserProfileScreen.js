@@ -1,175 +1,221 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, Dimensions, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LineChart } from 'react-native-chart-kit';
+import React, { useEffect, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image, Modal, StyleSheet, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { GlobalStyles, colors } from '../styles/GlobalStyles';
+import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { UserProfileScreenStyles as styles } from '../styles/UserProfileScreenStyles';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { URI } from '../data/URI';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
 
-const UserProfileScreen = () => {
-  const role = 'client';
-  const userName = "John Doe";
-  const userHeight = "180 cm";
-  const userWeight = "75 kg";
-  const userBMI = "23.1";
-  const userCalories = 1800;
-  const totalCalories = 2500;
-  const userImage = null; // Assuming this comes from props or state; null means no image available
+const screenWidth = Dimensions.get('window').width;
 
-  const [caloriesBurned, setCaloriesBurned] = useState(500);
-  const [assignedActivities, setAssignedActivities] = useState([
-    { id: 1, name: '30 minutes of running', calories: 300, completed: false },
-    { id: 2, name: '15 minutes of strength training', calories: 200, completed: false },
-  ]);
+const UserProfileScreen = ({ route, navigation }) => {
 
-  const [clients, setClients] = useState([
-    { id: 1, name: 'Client A', progress: 50 },
-    { id: 2, name: 'Client B', progress: 30 },
-  ]);
+  const [userType, setUserType] = useState('client')
+  
+  useEffect(() => {
+    const fetchUserType = async () => {
+      const typeOfUser = await SecureStore.getItemAsync('userType');
+      console.log('userType', userType);
+      setUserType(typeOfUser);
+    };
 
-  // Dummy weight data for 30 days
-  const weightData = {
-    labels: Array.from({ length: 30 }, (_, i) => (i + 1).toString()), // Days 1 to 30
-    datasets: [
-      {
-        data: [75, 74, 76, 75, 74, 73, 74, 75, 76, 75, 77, 76, 75, 74, 73, 72, 73, 74, 75, 76, 77, 78, 77, 76, 75, 74, 73, 72, 71, 70], // Example weights
-        strokeWidth: 2, // Optional
-      },
+    fetchUserType();
+  }, []);
+
+  const [user, setUser] = useState({
+    name: 'John Doe',
+    age: 30,
+    location: 'New York, USA',
+    specialization: 'Strength Training',
+    certifications: ['Certified Trainer'],
+    rating: 4.8,
+    reviews: ['Great trainer!', 'Very helpful.'],
+    clients: ['Client A', 'Client B'],
+    images: [
+      require('../../assets/images/sample_gallery_image.jpeg'),
+      require('../../assets/images/sample_gallery_image.jpeg'),
+      require('../../assets/images/sample_gallery_image.jpeg'),
     ],
-  };
+  });
 
-  const handleCompleteActivity = (activityId) => {
-    const updatedActivities = assignedActivities.map(activity => {
-      if (activity.id === activityId) {
-        setCaloriesBurned(caloriesBurned + activity.calories);
-        return { ...activity, completed: true };
+  const [modalVisible, setModalVisible] = useState(false);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const [isBioExpanded, setBioExpanded] = useState(false);
+  const [isGoalsExpanded, setGoalsExpanded] = useState(false);
+  const [isSpecializationExpanded, setSpecializationExpanded] = useState(false);
+  const [isCertificationsExpanded, setCertificationsExpanded] = useState(false);
+  const [isClientsExpanded, setClientsExpanded] = useState(false);
+  const [isRatingExpanded, setRatingExpanded] = useState(false);
+
+  // Corrected useEffect hook to fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const storedUserId = await SecureStore.getItemAsync('userId');
+        const token = await SecureStore.getItemAsync('idToken'); // Get token from storage
+        const userType = await SecureStore.getItemAsync('userType');
+  
+        // Build the request configuration
+        const config = {
+          method: 'get',
+          maxBodyLength: Infinity,
+          url: `${URI.URL}${URI.ENDPOINTS.GET_TRAINERS_DETAILS}${storedUserId}`,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'UserType' : userType
+          },
+        };
+        
+        // Perform the GET request
+        const response = await axios.request(config);
+        
+        // Log the response and update user state
+        console.log("User data fetched successfully:", response.data);
+        // setUser(response.data); // Assuming response.data has user details
+      } catch (error) {
+        console.log("Error fetching user data:", error);
       }
-      return activity;
-    });
-    setAssignedActivities(updatedActivities);
-    Alert.alert('Activity Completed', 'Great job on completing the activity!');
+    };
+  
+    fetchUserData(); // Call the async function
+  
+    // Optionally, if you need cleanup, return a cleanup function here
+    return () => {
+      // Cleanup function if necessary
+    };
+  }, []);
+  
+
+  const toggleSection = (isExpanded, setExpanded) => {
+    setExpanded(!isExpanded);
   };
 
-  const handleAssignActivity = (clientId) => {
-    Alert.alert('Assign Activity', `Assign activity to Client ${clientId}`);
+  const openModal = (index) => {
+    setActiveImageIndex(index);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+  };
+
+  const handleNextImage = () => {
+    setActiveImageIndex((prevIndex) => (prevIndex + 1) % user.images.length);
+  };
+
+  const handlePrevImage = () => {
+    setActiveImageIndex((prevIndex) =>
+      prevIndex === 0 ? user.images.length - 1 : prevIndex - 1
+    );
   };
 
   return (
-    <SafeAreaView style={GlobalStyles.container}>
-      <ScrollView contentContainerStyle={GlobalStyles.scrollContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          {userImage ? (
-            <FontAwesome name="user-circle" size={100} color={colors.primary} style={styles.profilePicture} />
-          ) : (
-            <FontAwesome name="user-circle" size={100} color={colors.primary} style={styles.profilePicture} /> // Placeholder icon
-          )}
-          <View style={styles.nameContainer}>
-            <Text style={[GlobalStyles.heading1, styles.profileName]}>{userName}</Text>
-            <TouchableOpacity>
-              <MaterialIcons name="settings" size={25} color={colors.text} style={styles.settingsIcon} />
-            </TouchableOpacity>
+    <ScrollView style={styles.container}>
+      {/* Gradient Header with Profile Info */}
+      <LinearGradient colors={[colors.gradientStart, colors.gradientEnd]} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={styles.headerContainer}>
+        <View style={styles.headerContent}>
+          <Image source={require('../../assets/images/sample_gallery_image.jpeg')} style={styles.profileImage} />
+          <View style={styles.headerText}>
+            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={styles.userDetails}>{user.age} years old</Text>
+            <Text style={styles.userDetails}>{user.location}</Text>
           </View>
         </View>
+        {/* Settings Icon */}
+        <TouchableOpacity style={styles.settingsButton} onPress={() => navigation.navigate('EditProfileScreen', { user })}>
+          <Ionicons name="settings" size={25} color="#fff" />
+        </TouchableOpacity>
+      </LinearGradient>
 
-        {role === 'client' ? (
-          <>
-            {/* User Statistics */}
-            <View style={styles.statistics}>
-              <Text style={GlobalStyles.text}>Height: {userHeight}</Text>
-              <Text style={GlobalStyles.text}>Weight: {userWeight}</Text>
-              <Text style={GlobalStyles.text}>BMI: {userBMI}</Text>
-            </View>
-
-            <View style={styles.caloriesContainer}>
-              <Text style={GlobalStyles.text}>Calories:</Text>
-              <View style={styles.progressBarContainer}>
-                <View style={styles.progressBarBackground}>
-                  <View style={[styles.progressBar, styles.consumedBar, { width: `${(userCalories / totalCalories) * 100}%` }]} />
-                  <View style={[styles.progressBar, styles.burnedBar, { width: `${(caloriesBurned / totalCalories) * 100}%` }]} />
-                </View>
-                <Text style={GlobalStyles.smallText}>Consumed: {userCalories} / Burned: {caloriesBurned}</Text>
-              </View>
-            </View>
-
-            {/* Line Chart */}
-            <View style={styles.graphContainer}>
-              <Text style={GlobalStyles.heading2}>Weight Changes Over 30 Days</Text>
-              <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-                <LineChart
-                  data={weightData}
-                  width={Dimensions.get('window').width * 1.5} // Wider for horizontal scrolling
-                  height={220}
-                  chartConfig={{
-                    backgroundColor: colors.background,
-                    backgroundGradientFrom: colors.background,
-                    backgroundGradientTo: colors.background,
-                    decimalPlaces: 2, // optional, defaults to 2dp
-                    color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-                    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                    style: {
-                      borderRadius: 16,
-                    },
-                  }}
-                  style={{
-                    marginVertical: 8,
-                    borderRadius: 16,
-                  }}
-                />
-              </ScrollView>
-            </View>
-
-            {/* Assigned Activities */}
-            <View style={styles.activitiesContainer}>
-              <Text style={GlobalStyles.heading2}>Assigned Activities</Text>
-              {assignedActivities.map(activity => (
-                <View key={activity.id} style={styles.activityItem}>
-                  <Text style={GlobalStyles.text}>{activity.name}</Text>
-                  <TouchableOpacity
-                    style={[GlobalStyles.button, activity.completed && styles.activityButtonCompleted]}
-                    onPress={() => handleCompleteActivity(activity.id)}
-                    disabled={activity.completed}
-                  >
-                    <Text style={GlobalStyles.buttonText}>{activity.completed ? 'Completed' : 'Complete'}</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-            </View>
-          </>
-        ) : (
-          // Trainer's Clients Section
-          <>
-            <View style={styles.trainerSection}>
-              <Text style={GlobalStyles.heading2}>Achievements</Text>
-              <View style={styles.statLabelContainer}>
-                <Text style={GlobalStyles.text}>Number of Clients: </Text>
-                <Text style={GlobalStyles.text}>{clients.length}</Text>
-              </View>
-              <View style={styles.statLabelContainer}>
-                <Text style={GlobalStyles.text}>Ratings: </Text>
-                <Text style={GlobalStyles.text}>4.8</Text> 
-              </View>
-            </View>
-
-            <View style={styles.clientsContainer}>
-              <Text style={GlobalStyles.heading2}>Your Clients</Text>
-              {clients.map(client => (
-                <View key={client.id} style={styles.clientItem}>
-                  <Text style={GlobalStyles.text}>{client.name}</Text>
-                  <TouchableOpacity
-                    style={GlobalStyles.button}
-                    onPress={() => handleAssignActivity(client.id)}
-                  >
-                    <Text style={GlobalStyles.buttonText}>Assign Activity</Text>
-                  </TouchableOpacity>
-                  <Text style={GlobalStyles.smallText}>Progress: {client.progress}%</Text>
-                </View>
-              ))}
-            </View>
-          </>
-        )}
+      {/* Gallery Section */}
+      <Text style={styles.sectionTitle}>Gallery</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryContainer}>
+        {user.images.map((image, index) => (
+          <TouchableOpacity key={index} onPress={() => openModal(index)}>
+            <Image source={image} style={styles.galleryImage} />
+          </TouchableOpacity>
+        ))}
       </ScrollView>
-    </SafeAreaView>
+
+      {/* Modal for Image Carousel */}
+      <Modal visible={modalVisible} transparent={true} onRequestClose={closeModal}>
+        <View style={styles.modalContainer}>
+          <TouchableOpacity style={styles.arrowButtonLeft} onPress={handlePrevImage}>
+            <Ionicons name="chevron-back" size={40} color="white" />
+          </TouchableOpacity>
+
+          <Image source={user.images[activeImageIndex]} style={styles.modalImage} />
+
+          <TouchableOpacity style={styles.arrowButtonRight} onPress={handleNextImage}>
+            <Ionicons name="chevron-forward" size={40} color="white" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.closeButton} onPress={closeModal}>
+            <Ionicons name="close-circle" size={40} color="white" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Collapsible Sections */}
+      {/* Bio Section */}
+      <TouchableOpacity style={styles.collapsibleHeader} onPress={() => toggleSection(isBioExpanded, setBioExpanded)}>
+        <Text style={styles.sectionTitle}>Bio</Text>
+        <Ionicons name={isBioExpanded ? "remove" : "add"} size={20} />
+      </TouchableOpacity>
+      {isBioExpanded && (
+        <View style={styles.collapsibleContent}>
+          <Text style={styles.sectionText}>Bio details here...</Text>
+        </View>
+      )}
+      <View style={styles.separator} />
+
+      {/* Goals and other sections */}
+      {userType === 'client' ? (
+        <>
+          {/* Goals Section */}
+          <TouchableOpacity style={styles.collapsibleHeader} onPress={() => toggleSection(isGoalsExpanded, setGoalsExpanded)}>
+            <Text style={styles.sectionTitle}>Goals</Text>
+            <Ionicons name={isGoalsExpanded ? "remove" : "add"} size={20} />
+          </TouchableOpacity>
+          {isGoalsExpanded && (
+            <View style={styles.collapsibleContent}>
+              <Text style={styles.sectionText}>Goal 1: Weight Loss</Text>
+              <Text style={styles.sectionText}>Goal 2: Increase Muscle Mass</Text>
+            </View>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Specialization Section */}
+          <TouchableOpacity style={styles.collapsibleHeader} onPress={() => toggleSection(isSpecializationExpanded, setSpecializationExpanded)}>
+            <Text style={styles.sectionTitle}>Specialization</Text>
+            <Ionicons name={isSpecializationExpanded ? "remove" : "add"} size={20} />
+          </TouchableOpacity>
+          {isSpecializationExpanded && (
+            <View style={styles.collapsibleContent}>
+              <Text style={styles.sectionText}>{user.specialization}</Text>
+            </View>
+          )}
+          <View style={styles.separator} />
+
+          {/* Certifications Section */}
+          <TouchableOpacity style={styles.collapsibleHeader} onPress={() => toggleSection(isCertificationsExpanded, setCertificationsExpanded)}>
+            <Text style={styles.sectionTitle}>Certifications</Text>
+            <Ionicons name={isCertificationsExpanded ? "remove" : "add"} size={20} />
+          </TouchableOpacity>
+          {isCertificationsExpanded && (
+            <View style={styles.collapsibleContent}>
+              {user.certifications.map((cert, index) => (
+                <Text key={index} style={styles.sectionText}>{cert}</Text>
+              ))}
+            </View>
+          )}
+        </>
+      )}
+    </ScrollView>
   );
 };
 

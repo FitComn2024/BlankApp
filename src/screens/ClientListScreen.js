@@ -1,13 +1,33 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { HomeDashboardScreenStyles as styles } from '../styles/HomeDashboardScreenStyles';
 import { GlobalStyles } from '../styles/GlobalStyles';
+import * as SecureStore from 'expo-secure-store';
 
 const ClientListScreen = ({ route, navigation }) => {
   const { title, clients =[] } = route.params;
 
-  const handleCardPress = (client) => {
-    navigation.navigate('ClientProfile', { client });
+  const [userType, setUserType] = useState('client')
+  
+  useEffect(() => {
+    const fetchUserType = async () => {
+      const typeOfUser = await SecureStore.getItemAsync('userType');
+      console.log('userType', userType);
+      setUserType(typeOfUser);
+    };
+
+    fetchUserType();
+  }, []);
+
+  const handleCardPress = (user) => {
+    console.log('passing data', user);
+    if (userType === 'client') {
+      // Navigate to TrainerProfile screen for a client viewing a trainer's profile
+      navigation.navigate('TrainerProfile', { user });
+    } else {
+      // Navigate to ClientProfile screen for a trainer viewing a client's profile
+      navigation.navigate('ClientProfile', { client: user });
+    }
   };
 
   return (
